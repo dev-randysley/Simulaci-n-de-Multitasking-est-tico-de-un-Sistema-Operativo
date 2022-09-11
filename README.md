@@ -1,1 +1,1 @@
-# Simulaci-n-de-Multitasking-est-tico-de-un-Sistema-Operativo
+# Simulacion-de-Multitasking-estatico-de-un-Sistema-Operativo
