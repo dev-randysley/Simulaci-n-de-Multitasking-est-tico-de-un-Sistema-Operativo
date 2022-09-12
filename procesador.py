@@ -1,14 +1,25 @@
+from util import parse_csv
+
+
 def main():
-    pass
+    print(parse_csv("prog.asm",has_headers=False))
+
+def parsear_instrucciones(intrucciones : list):
+    list_instrucciones = []
+    lookupTable = {}
+    # TODO logic to parse instructions
+    return list_instrucciones,lookupTable
 
 class Ensamblador:
-    
     @staticmethod
-    def generarEjecutable():
-        return Ejecutable()
+    def ensamblar(file_name):
+        lista_instrucciones,lookupTable = parsear_instrucciones(parse_csv(file_name))
+        entry_point = 0
+        
+        return Ejecutable(instrucciones=lista_instrucciones,entryPoint=entry_point,lookupTable=lookupTable)
 
 class Ejecutable:
-    def __init__(self,entryPoint, instrucciones, lookupTable, codigoFuente):
+    def __init__(self, entryPoint, instrucciones : list, lookupTable : dict, codigoFuente):
         self.entryPoint = entryPoint
         self.instrucciones = instrucciones
         self.lookupTable = lookupTable
