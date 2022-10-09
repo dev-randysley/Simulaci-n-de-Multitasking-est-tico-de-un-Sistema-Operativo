@@ -5,7 +5,9 @@ import re
 FILE_NAME = "prog.asm"
 
 def main():
-    Ensamblador.ensamblar(FILE_NAME)
+    ejecutable = Ensamblador.ensamblar(FILE_NAME)
+    #sistemaOperativo = SistemaOperativo(ejecutable,Procesador())
+    #sistemaOperativo.procesar()
 
 def is_label(instruction):
     return re.search('^([\w_]+):', instruction)
@@ -21,7 +23,7 @@ def parse_instruction(instruction):
             elif (match.group(1) == "add"):
                 return Add(params.group(1),params.group(2))
 
-            elif (match.group(1) == "add"):
+            elif (match.group(1) == "cmp"):
                 return Cmp(params.group(1),params.group(2))
 
         elif (match.group(1) in ["dec", "inc", "jnz", "jmp"]):
@@ -44,8 +46,9 @@ def parsear_instrucciones(instructions : list):
     lookupTable = {}
 
     for index, instruction in enumerate(instructions):
-        if is_label(instruction):
-            lookupTable[instruction] = index    
+        match = is_label(instruction)
+        if match:
+            lookupTable[match.group(1)] = index    
         else:
             list_instrucciones.append(parse_instruction(instruction))
 
@@ -58,17 +61,17 @@ class Ensamblador:
         lista_instrucciones,lookupTable = parsear_instrucciones(codigo_fuente)
         entry_point = 0
         
-        return Ejecutable(instrucciones=lista_instrucciones,entryPoint=entry_point,lookupTable=lookupTable,codigoFuente = codigo_fuente)
+        return Ejecutable(instrucciones=lista_instrucciones,
+                          entryPoint=entry_point,
+                          lookupTable=lookupTable,
+                          codigoFuente = [linea.replace("\n","") for linea in codigo_fuente])
 
 class Ejecutable:
-    def __init__(self, entryPoint, instrucciones : list, lookupTable : dict, codigoFuente):
+    def __init__(self, entryPoint, instrucciones : list, lookupTable : dict, codigoFuente: list):
         self.entryPoint = entryPoint
         self.instrucciones = instrucciones
         self.lookupTable = lookupTable
         self.codigoFuente = codigoFuente
-
-    def procesar(self):
-       pass
 
     def getEntryPoint(self):
         return self.entryPoint
@@ -82,20 +85,33 @@ class Ejecutable:
     def getLookupTable(self):
         return self.lookupTable
 
-    def run(self):
-        pass
-
 class Procesador:
-    def __init__(self, ax, bx, cx, dx, ip, flag):
-        self.ax = ax
-        self.bx = bx
-        self.cx = cx
-        self.dx = dx
-        self.ip = ip
-        self.flag = flag
+    def __init__(self):
+        self.ax = ""
+        self.bx = ""
+        self.cx = ""
+        self.dx = ""
+        self.ip = ""
+        self.flag = ""
+        self.proceso = None
 
-    def ejecutar(self, ejecutable):
-        ejecutable.procesar()
+    def procesar(self, proceso):
+        self.setProceso(proceso)
+        ejecutable = proceso.getEjecutable()
+        punteroInstruccion = self.procesador.getIP()
+        cantidadInstrucciones = len(ejecutable.getListaInstrucciones())
+        while (punteroInstruccion < cantidadInstrucciones):
+            indiceInstruccion = self.procesador.getIP()
+            ejecutable.getListInstrucciones()[indiceInstruccion].procesar(self.procesador)
+            #visualizador.mostrar(ejecutable, procesador)
+            print(ejecutable.getCodigoFuente()[indiceInstruccion])
+            #procesador.mostrar()
+        
+    def getProceso(self):
+        return self.getProceso
+
+    def setProceso(self,proceso):
+        self.proceso = proceso
 
     def setRegistro(self,registro,nuevoValor):
         self.setRegistros[registro](nuevoValor)
@@ -163,7 +179,19 @@ class SistemaOperativo:
         self.procesador = procesador
     
     def procesar(self):
-        self.procesador.procesar(self.ejecutable)
+        proceso = Proceso(self.ejecutable)
+        self.procesador.procesar(proceso)
+
+class Proceso:
+    def __init__(self, ejecutable):
+        self.ejecutable = ejecutable
+        self.stack = []
+    
+    def getEjecutable(self):
+        return self.ejecutable
+    
+    def getStack(self):
+        return self.stack
 
 class Visualizador:
 
@@ -191,6 +219,8 @@ class Mov(Instruccion):
             procesador.setRegistro(self.param1,procesador.getRegistro(self.param2))
         else:
             procesador.setRegistro(self.param1, int(self.param2))
+        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
+
     def __str__(self):
         string = "mov {}, {}".format(self.param1,self.param2)
         return string
@@ -206,6 +236,8 @@ class Add(Instruccion):
         else:
             procesador.setRegistro(self.param1, 
             procesador.getRegistro(self.param1) + self.param2)
+        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
+
     def __str__(self):
         string = "add {}, {}".format(self.param1,self.param2)
         return string
@@ -214,7 +246,9 @@ class Jmp(Instruccion):
     def __init__(self, label):
         self.param1 = label
     def procesar(self, procesador):
-        pass
+        lookupTable = procesador.getProceso().getEjecutable().getLookupTable()
+        indiceProximaInstruccion = lookupTable[self.param1]
+        procesador.setIP(indiceProximaInstruccion) # seteamos directamente el indice segun la etiqueta
      
     def __str__(self):
         string = "jmp {}".format(self.param1)
@@ -225,7 +259,12 @@ class Jnz(Instruccion):
         self.param1 = label
 
     def procesar(self, procesador):
-        pass
+        lookupTable = procesador.getProceso().getEjecutable().getLookupTable()
+        indiceProximaInstruccion = lookupTable[self.param1]
+        if procesador.setFlag() == 1:
+            procesador.setIP(indiceProximaInstruccion) # seteamos directamente el indice segun la etiqueta
+        else:
+             procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
     def __str__(self):
         string = "jnz {}".format(self.param1)
         return string
@@ -241,6 +280,7 @@ class Cmp(Instruccion):
         else:
              if procesador.getRegistro(self.param1) != procesador.getRegistro(self.param2):
                 procesador.getRegistro("flag",1)
+        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
     def __str__(self):
         string = "cmp {}, {}".format(self.param1,self.param2)
         return string
@@ -250,6 +290,7 @@ class Inc(Instruccion):
         self.param1 = param1
     def procesar(self, procesador):
         procesador.setRegistro(self.param1,procesador.getRegistro(self.param1) + 1)
+        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
     def __str__(self):
         string = "inc {}".format(self.param1)
         return string
@@ -259,6 +300,7 @@ class Dec(Instruccion):
         self.param1 = param1
     def procesar(self, procesador):
         procesador.setRegistro(self.param1,procesador.getRegistro(self.param1) - 1)
+        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
     def __str__(self):
         string = "dec {}".format(self.param1)
         return string

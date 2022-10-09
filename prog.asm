@@ -6,3 +6,4 @@ inc cx
 cmp cx, 10
 jnz Ciclo
 jmp Fin
+Fin:
