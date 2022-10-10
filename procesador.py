@@ -6,38 +6,38 @@ FILE_NAME = "prog.asm"
 
 def main():
     ejecutable = Ensamblador.ensamblar(FILE_NAME)
-    #sistemaOperativo = SistemaOperativo(ejecutable,Procesador())
-    #sistemaOperativo.procesar()
+    sistemaOperativo = SistemaOperativo(ejecutable,Procesador())
+    sistemaOperativo.procesar()
 
 def is_label(instruction):
     return re.search('^([\w_]+):', instruction)
 
 def parse_instruction(instruction):
-    match = re.search('(mov|add|jmp|jnz|cmp|inc|dec)(.*)', instruction)
+    match = re.search('(mov|add|jmp|jz|cmp|inc|dec)(.*)', instruction)
     if match:
         params = re.search('\s*(\w*),\s*(\w*)', instruction)
         if (match.group(1) in ["cmp", "add", "mov"]):
             if (match.group(1) == "mov"):
-                return Mov(params.group(1),params.group(2))
+                return Mov(params.group(1).strip(),params.group(2).strip())
 
             elif (match.group(1) == "add"):
-                return Add(params.group(1),params.group(2))
+                return Add(params.group(1).strip(),params.group(2).strip())
 
             elif (match.group(1) == "cmp"):
-                return Cmp(params.group(1),params.group(2))
+                return Cmp(params.group(1).strip(),params.group(2).strip())
 
-        elif (match.group(1) in ["dec", "inc", "jnz", "jmp"]):
+        elif (match.group(1) in ["dec", "inc", "jz", "jmp"]):
             if (match.group(1) == "dec"):
-                return Dec(match.group(2))
+                return Dec(match.group(2).strip())
 
             elif (match.group(1) == "inc"):
-                return Inc(match.group(2))
+                return Inc(match.group(2).strip())
 
-            elif (match.group(1) == "jnz"):
-                return Jnz(match.group(2))
+            elif (match.group(1) == "jz"):
+                return Jz(match.group(2).strip())
             
             elif (match.group(1) == "jmp"):
-                return Jmp(match.group(2))
+                return Jmp(match.group(2).strip())
         else:
             pass
 
@@ -87,37 +87,37 @@ class Ejecutable:
 
 class Procesador:
     def __init__(self):
-        self.ax = ""
-        self.bx = ""
-        self.cx = ""
-        self.dx = ""
-        self.ip = ""
-        self.flag = ""
+        self.ax = 0
+        self.bx = 0
+        self.cx = 0
+        self.dx = 0
+        self.ip = 0
+        self.flag = 0
         self.proceso = None
 
     def procesar(self, proceso):
-        self.setProceso(proceso)
         ejecutable = proceso.getEjecutable()
-        punteroInstruccion = self.procesador.getIP()
+        self.setProceso(proceso)
+        self.setIP(ejecutable.getEntryPoint())
+        punteroInstruccion = self.getIP()
         cantidadInstrucciones = len(ejecutable.getListaInstrucciones())
         while (punteroInstruccion < cantidadInstrucciones):
-            indiceInstruccion = self.procesador.getIP()
-            ejecutable.getListInstrucciones()[indiceInstruccion].procesar(self.procesador)
+            ejecutable.getListaInstrucciones()[punteroInstruccion].procesar(self)
+            punteroInstruccion = self.getIP()
             #visualizador.mostrar(ejecutable, procesador)
-            print(ejecutable.getCodigoFuente()[indiceInstruccion])
             #procesador.mostrar()
         
     def getProceso(self):
-        return self.getProceso
+        return self.proceso
 
     def setProceso(self,proceso):
         self.proceso = proceso
 
     def setRegistro(self,registro,nuevoValor):
-        self.setRegistros[registro](nuevoValor)
+        self.setRegistros[registro](self,nuevoValor)
 
     def getRegistro(self,registro):
-        return self.getRegistros[registro]
+        return self.getRegistros[registro](self)
 
     def setAx(self,valor):
         self.ax = valor
@@ -254,19 +254,19 @@ class Jmp(Instruccion):
         string = "jmp {}".format(self.param1)
         return string
 
-class Jnz(Instruccion):
+class Jz(Instruccion):
     def __init__(self, label):
         self.param1 = label
 
     def procesar(self, procesador):
         lookupTable = procesador.getProceso().getEjecutable().getLookupTable()
         indiceProximaInstruccion = lookupTable[self.param1]
-        if procesador.setFlag() == 1:
+        if procesador.getFlag() == 0:
             procesador.setIP(indiceProximaInstruccion) # seteamos directamente el indice segun la etiqueta
         else:
              procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
     def __str__(self):
-        string = "jnz {}".format(self.param1)
+        string = "jz {}".format(self.param1)
         return string
 
 class Cmp(Instruccion):
@@ -275,12 +275,16 @@ class Cmp(Instruccion):
         self.param2 = param2
     def procesar(self, procesador):
         if self.param2 in ["ax", "bx", "cx", "dx"]:
-            if procesador.getRegistro(self.param1) == procesador.getRegistro(self.param2):
-                procesador.getRegistro("flag",0)
+            if int(procesador.getRegistro(self.param1)) == int(procesador.getRegistro(self.param2)):
+                procesador.setRegistro("flag",1)
         else:
-             if procesador.getRegistro(self.param1) != procesador.getRegistro(self.param2):
-                procesador.getRegistro("flag",1)
+            if int(procesador.getRegistro(self.param1)) == int(self.param2):
+                procesador.setRegistro("flag",1)
+            else:
+                procesador.setRegistro("flag",0)
+
         procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
+    
     def __str__(self):
         string = "cmp {}, {}".format(self.param1,self.param2)
         return string
@@ -288,9 +292,11 @@ class Cmp(Instruccion):
 class Inc(Instruccion):
     def __init__(self, param1):
         self.param1 = param1
+    
     def procesar(self, procesador):
         procesador.setRegistro(self.param1,procesador.getRegistro(self.param1) + 1)
         procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
+    
     def __str__(self):
         string = "inc {}".format(self.param1)
         return string
@@ -298,9 +304,11 @@ class Inc(Instruccion):
 class Dec(Instruccion):
     def __init__(self, param1):
         self.param1 = param1
+    
     def procesar(self, procesador):
         procesador.setRegistro(self.param1,procesador.getRegistro(self.param1) - 1)
         procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
+    
     def __str__(self):
         string = "dec {}".format(self.param1)
         return string
