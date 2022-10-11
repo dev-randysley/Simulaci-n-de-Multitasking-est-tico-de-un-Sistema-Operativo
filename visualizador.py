@@ -42,20 +42,6 @@ class Visualizador:
         self.pantalla.addstr(4, 25, "ip: " + str(procesador.getIP()))
         self.pantalla.addstr(5, 25, "flag: " + str(procesador.getFlag()))
 
-    
-    def __mostrarMemoriaVideo(self, procesador):
-        self.pantalla.addstr(0, 40, "--Memoria de Video--")
-        for fila in range(len(procesador.proceso.memoriaVideo)):
-            filaImprimir = fila + 1
-            for columna in range(len(procesador.proceso.memoriaVideo[fila])):
-                columnaImprimir = columna + 40
-                aImprimir = str(procesador.proceso.memoriaVideo[fila][columna])
-                yaImpreso = self.pantalla.inch(filaImprimir, columnaImprimir)
-                
-                if(yaImpreso == 32 or aImprimir != "*"):
-                    self.pantalla.addstr(filaImprimir, columnaImprimir, aImprimir)
-
-
     def mostrarFin(self, listaProcesos):
         print("\n\n", "Ejecucion finalizada")
         print("Los procesos terminaron con los siguientes valores: ", end="\n\n")
