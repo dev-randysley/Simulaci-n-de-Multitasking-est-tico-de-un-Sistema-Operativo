@@ -6,8 +6,10 @@ FILE_NAME = "prog.asm"
 
 def main():
     ejecutable = Ensamblador.ensamblar(FILE_NAME)
-    sistemaOperativo = SistemaOperativo(ejecutable,Procesador())
-    sistemaOperativo.procesar()
+    print(ejecutable.getListaInstrucciones())
+    print(ejecutable.getLookupTable())
+    #sistemaOperativo = SistemaOperativo(ejecutable,Procesador())
+    #sistemaOperativo.procesar()
 
 def is_label(instruction):
     return re.search('^([\w_]+):', instruction)
@@ -46,11 +48,11 @@ def parsear_instrucciones(instructions : list):
     lookupTable = {}
 
     for index, instruction in enumerate(instructions):
-        match = is_label(instruction)
+        match = is_label(instruction[0])
         if match:
             lookupTable[match.group(1)] = index    
         else:
-            list_instrucciones.append(parse_instruction(instruction))
+            list_instrucciones.append(parse_instruction(instruction[0]))
 
     return list_instrucciones,lookupTable
 
@@ -58,13 +60,26 @@ class Ensamblador:
     @staticmethod
     def ensamblar(file_name):
         codigo_fuente = parse_csv(file_name)
-        lista_instrucciones,lookupTable = parsear_instrucciones(codigo_fuente)
+        instrucciones_con_includes = Ensamblador.addInclude(file_name)
+        lista_instrucciones,lookupTable = parsear_instrucciones(instrucciones_con_includes)
         entry_point = 0
         
         return Ejecutable(instrucciones=lista_instrucciones,
                           entryPoint=entry_point,
                           lookupTable=lookupTable,
                           codigoFuente = [linea.replace("\n","") for linea in codigo_fuente])
+    @staticmethod
+    def addInclude(file_name):
+        codigo_fuente = parse_csv(file_name)
+        lista_con_includes = []
+        for line in [linea.replace("\n","") for linea in codigo_fuente]:
+            if "Include" in line:
+                lista_con_includes.extend(Ensamblador.addInclude(line.split(" ")[1]))
+            else:
+                lista_con_includes.append((line,file_name))
+        return lista_con_includes
+
+
 
 class Ejecutable:
     def __init__(self, entryPoint, instrucciones : list, lookupTable : dict, codigoFuente: list):

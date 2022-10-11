@@ -1,5 +1,5 @@
-mov ax, 0
-mov cx, 1
+Include lib1.asm
+
 Ciclo:
 add ax, cx
 inc cx
