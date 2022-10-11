@@ -6,4 +6,4 @@ def parse_csv(filename):
         for line in f:
             if(line != '\n'):
                 records.append(line)
-    return records
+    return [linea.replace("\n","") for linea in records]
