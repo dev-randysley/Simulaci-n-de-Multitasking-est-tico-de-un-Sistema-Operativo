@@ -126,21 +126,20 @@ class Visualizador:
     def __init__(self):
         self.pantalla = curses.initscr()
 
-    @staticmethod
-    def mostrar(self, ejecutable, procesador):
+    def mostrar(self,ejecutable, procesador):
         #try:
             print("\n entra mostrar1")
             #self.pantalla.clear()
 
-            self.mostrarInstrucciones(self, ejecutable, procesador)
+            self.mostrarInstrucciones(ejecutable, procesador)
             print("\n entra mostrar2")
 
 
-            Visualizador.mostrarRegistros(procesador)
+            self.mostrarRegistros(procesador)
 
-            Visualizador.mostrarMemoriaVideo(procesador)
+            self.mostrarMemoriaVideo(procesador)
 
-            Visualizador.pantalla.refresh()
+            self.pantalla.refresh()
 
             time.sleep(0.5)
         #except:
@@ -148,7 +147,6 @@ class Visualizador:
 
         #    pass
 
-    @staticmethod
     def mostrarInstrucciones(self, ejecutable, procesador):
         print("\n entra mostrarInstrucciones")
 
@@ -160,14 +158,14 @@ class Visualizador:
                 #Si es la instruccion ejecutada, muestro con una flecha
                 if(indice == procesador.ip):
                     self.pantalla.addstr(indice, 0, "->")
-                    self.getPantalla(self).addstr(indice, 3, ejecutable.getCodigoFuente()[indice].strip())
+                    self.pantalla.addstr(indice, 3, ejecutable.getCodigoFuente()[indice].strip())
                 else:
-                    self.getPantalla(self).addstr(indice, 3, ejecutable.getCodigoFuente()[indice].strip())
+                    self.pantalla.addstr(indice, 3, ejecutable.getCodigoFuente()[indice].strip())
                 
                 totalMostrado += 1
                 if(totalMostrado == 5):
                     if(totalMostrado != len(ejecutable.getCodigoFuente())):
-                        self.getPantalla(self).addstr(indice + 1, 3, "...")
+                        self.pantalla.addstr(indice + 1, 3, "...")
                     break
         
         #Si estoy en las ultimas 2 posiciones
@@ -175,16 +173,16 @@ class Visualizador:
             rango = range(len(ejecutable.getCodigoFuente()))
             if(len(rango) > 5):
                 rango = rango[len(rango) - 5: len(rango)]
-                self.getPantalla(self).addstr(0, 3, "...")
+                self.pantalla.addstr(0, 3, "...")
                 totalMostrado += 1
 
             for indice in rango:
                 #Si es la instruccion ejecutada, muestro con una flecha
                 if(indice == procesador.ip):
-                    self.getPantalla(self).addstr(totalMostrado, 0, "->")
-                    self.getPantalla(self).addstr(totalMostrado, 3, ejecutable.getCodigoFuente()[indice].strip())
+                    self.pantalla.addstr(totalMostrado, 0, "->")
+                    self.pantalla.addstr(totalMostrado, 3, ejecutable.getCodigoFuente()[indice].strip())
                 else:
-                    self.getPantalla(self).addstr(totalMostrado, 3, ejecutable.getCodigoFuente()[indice].strip())
+                    self.pantalla.addstr(totalMostrado, 3, ejecutable.getCodigoFuente()[indice].strip())
                 
                 totalMostrado += 1
         
@@ -192,21 +190,20 @@ class Visualizador:
         else:
             indice = 0
             if(procesador.ip - 2 > 0):
-                self.getPantalla(self).addstr(indice, 3, "...")
+                self.pantalla.addstr(indice, 3, "...")
                 indice += 1
 
-            self.getPantalla(self).addstr(indice, 3, ejecutable.getCodigoFuente()[procesador.ip - 2].strip())
-            self.getPantalla(self).addstr(indice + 1, 3, ejecutable.getCodigoFuente()[procesador.ip - 1].strip())
+            self.pantalla.addstr(indice, 3, ejecutable.getCodigoFuente()[procesador.ip - 2].strip())
+            self.pantalla.addstr(indice + 1, 3, ejecutable.getCodigoFuente()[procesador.ip - 1].strip())
 
-            self.getPantalla(self).addstr(indice + 2, 0, "->")
-            self.getPantalla(self).addstr(indice + 2, 3, ejecutable.getCodigoFuente()[procesador.ip].strip())
+            self.pantalla.addstr(indice + 2, 0, "->")
+            self.pantalla.addstr(indice + 2, 3, ejecutable.getCodigoFuente()[procesador.ip].strip())
 
-            self.getPantalla(self).addstr(indice + 3, 3, ejecutable.getCodigoFuente()[procesador.ip + 1].strip())
-            self.getPantalla(self).addstr(indice + 4, 3, ejecutable.getCodigoFuente()[procesador.ip + 2].strip())
+            self.pantalla.addstr(indice + 3, 3, ejecutable.getCodigoFuente()[procesador.ip + 1].strip())
+            self.pantalla.addstr(indice + 4, 3, ejecutable.getCodigoFuente()[procesador.ip + 2].strip())
 
-            self.getPantalla(self).addstr(indice + 5, 3, "...")
+            self.pantalla.addstr(indice + 5, 3, "...")
 
-    @staticmethod
     def mostrarRegistros(self, procesador):
         self.pantalla.addstr(0, 25, "ax: " + str(procesador.ax))
         self.pantalla.addstr(1, 25, "bx: " + str(procesador.bx))
@@ -215,7 +212,6 @@ class Visualizador:
         self.pantalla.addstr(4, 25, "ip: " + str(procesador.ip))
         self.pantalla.addstr(5, 25, "flag: " + str(procesador.flag))
 
-    @staticmethod
     def mostrarMemoriaVideo(self, procesador):
         self.pantalla.addstr(0, 40, "--Memoria de Video--")
         for fila in range(len(procesador.proceso.memoriaVideo)):
@@ -228,7 +224,6 @@ class Visualizador:
                 if(yaImpreso == 32 or aImprimir != "*"):
                     self.pantalla.addstr(filaImprimir, columnaImprimir, aImprimir)
 
-    @staticmethod
     def mostrarFin(listaProcesos):
         print("\n\n", "¡Termino la ejecucion!")
         print("Los procesos terminaron con los siguientes valores: ", end="\n\n")
@@ -266,7 +261,8 @@ class Procesador:
             ejecutable.getListaInstrucciones()[punteroInstruccion].procesar(self)
             punteroInstruccion = self.getIP()
             #print(proceso.getStack()) prueba para ver el stack
-            Visualizador.mostrar(Visualizador, ejecutable, self)
+            visualizador = Visualizador()
+            visualizador.mostrar(ejecutable,self)
             #procesador.mostrar()
         print("Valor de multiplicacion: ",self.cx)
         
