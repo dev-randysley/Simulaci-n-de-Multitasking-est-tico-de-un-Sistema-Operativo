@@ -1,6 +1,8 @@
 from multiprocessing import Value
 from util import parse_csv
 import re
+import curses
+import time
 
 FILE_NAME = "prog.asm"
 FILE_NAME_TEST_FUNCIONES = "test_llamado_funciones.asm"
@@ -120,6 +122,130 @@ class Ejecutable:
     def getLookupTable(self):
         return self.lookupTable
 
+class Visualizador:
+    def __init__(self):
+        self.pantalla = curses.initscr()
+
+    @staticmethod
+    def mostrar(self, ejecutable, procesador):
+        #try:
+            print("\n entra mostrar1")
+            #self.pantalla.clear()
+
+            self.mostrarInstrucciones(self, ejecutable, procesador)
+            print("\n entra mostrar2")
+
+
+            Visualizador.mostrarRegistros(procesador)
+
+            Visualizador.mostrarMemoriaVideo(procesador)
+
+            Visualizador.pantalla.refresh()
+
+            time.sleep(0.5)
+        #except:
+        #    print("\n entra EXCEPTION")
+
+        #    pass
+
+    @staticmethod
+    def mostrarInstrucciones(self, ejecutable, procesador):
+        print("\n entra mostrarInstrucciones")
+
+        totalMostrado = 0
+
+        #Si "ip" vale 0 o 1
+        if(procesador.ip <= 1):
+            for indice in range(len(ejecutable.getCodigoFuente())):
+                #Si es la instruccion ejecutada, muestro con una flecha
+                if(indice == procesador.ip):
+                    self.pantalla.addstr(indice, 0, "->")
+                    self.getPantalla(self).addstr(indice, 3, ejecutable.getCodigoFuente()[indice].strip())
+                else:
+                    self.getPantalla(self).addstr(indice, 3, ejecutable.getCodigoFuente()[indice].strip())
+                
+                totalMostrado += 1
+                if(totalMostrado == 5):
+                    if(totalMostrado != len(ejecutable.getCodigoFuente())):
+                        self.getPantalla(self).addstr(indice + 1, 3, "...")
+                    break
+        
+        #Si estoy en las ultimas 2 posiciones
+        elif(procesador.ip + 1 >= (len(ejecutable.getCodigoFuente()) - 1)):
+            rango = range(len(ejecutable.getCodigoFuente()))
+            if(len(rango) > 5):
+                rango = rango[len(rango) - 5: len(rango)]
+                self.getPantalla(self).addstr(0, 3, "...")
+                totalMostrado += 1
+
+            for indice in rango:
+                #Si es la instruccion ejecutada, muestro con una flecha
+                if(indice == procesador.ip):
+                    self.getPantalla(self).addstr(totalMostrado, 0, "->")
+                    self.getPantalla(self).addstr(totalMostrado, 3, ejecutable.getCodigoFuente()[indice].strip())
+                else:
+                    self.getPantalla(self).addstr(totalMostrado, 3, ejecutable.getCodigoFuente()[indice].strip())
+                
+                totalMostrado += 1
+        
+        #Si esta en el medio de la lista
+        else:
+            indice = 0
+            if(procesador.ip - 2 > 0):
+                self.getPantalla(self).addstr(indice, 3, "...")
+                indice += 1
+
+            self.getPantalla(self).addstr(indice, 3, ejecutable.getCodigoFuente()[procesador.ip - 2].strip())
+            self.getPantalla(self).addstr(indice + 1, 3, ejecutable.getCodigoFuente()[procesador.ip - 1].strip())
+
+            self.getPantalla(self).addstr(indice + 2, 0, "->")
+            self.getPantalla(self).addstr(indice + 2, 3, ejecutable.getCodigoFuente()[procesador.ip].strip())
+
+            self.getPantalla(self).addstr(indice + 3, 3, ejecutable.getCodigoFuente()[procesador.ip + 1].strip())
+            self.getPantalla(self).addstr(indice + 4, 3, ejecutable.getCodigoFuente()[procesador.ip + 2].strip())
+
+            self.getPantalla(self).addstr(indice + 5, 3, "...")
+
+    @staticmethod
+    def mostrarRegistros(self, procesador):
+        self.pantalla.addstr(0, 25, "ax: " + str(procesador.ax))
+        self.pantalla.addstr(1, 25, "bx: " + str(procesador.bx))
+        self.pantalla.addstr(2, 25, "cx: " + str(procesador.cx))
+        self.pantalla.addstr(3, 25, "dx: " + str(procesador.dx))
+        self.pantalla.addstr(4, 25, "ip: " + str(procesador.ip))
+        self.pantalla.addstr(5, 25, "flag: " + str(procesador.flag))
+
+    @staticmethod
+    def mostrarMemoriaVideo(self, procesador):
+        self.pantalla.addstr(0, 40, "--Memoria de Video--")
+        for fila in range(len(procesador.proceso.memoriaVideo)):
+            filaImprimir = fila + 1
+            for columna in range(len(procesador.proceso.memoriaVideo[fila])):
+                columnaImprimir = columna + 40
+                aImprimir = str(procesador.proceso.memoriaVideo[fila][columna])
+                yaImpreso = self.pantalla.inch(filaImprimir, columnaImprimir)
+                
+                if(yaImpreso == 32 or aImprimir != "*"):
+                    self.pantalla.addstr(filaImprimir, columnaImprimir, aImprimir)
+
+    @staticmethod
+    def mostrarFin(listaProcesos):
+        print("\n\n", "¡Termino la ejecucion!")
+        print("Los procesos terminaron con los siguientes valores: ", end="\n\n")
+
+        for proceso in listaProcesos:
+            if(proceso.error == ""):
+                print("AX:", proceso.contexto.ax)
+                print("BX:", proceso.contexto.bx)
+                print("CX:", proceso.contexto.cx)
+                print("DX:", proceso.contexto.dx)
+                print("IP:", proceso.contexto.ip)
+                print("FLAG:", proceso.contexto.flag)
+                
+            else:
+                print("ERROR:", proceso.error)
+            print("----------------", end='\n\n')
+
 class Procesador:
     def __init__(self):
         self.ax = 0
@@ -140,7 +266,7 @@ class Procesador:
             ejecutable.getListaInstrucciones()[punteroInstruccion].procesar(self)
             punteroInstruccion = self.getIP()
             #print(proceso.getStack()) prueba para ver el stack
-            #visualizador.mostrar(ejecutable, procesador)
+            Visualizador.mostrar(Visualizador, ejecutable, self)
             #procesador.mostrar()
         print("Valor de multiplicacion: ",self.cx)
         
@@ -218,6 +344,9 @@ class SistemaOperativo:
     def procesar(self):
         proceso = Proceso(self.ejecutable)
         self.procesador.procesar(proceso)
+    
+    def getProcesador(self):
+        return self.procesador
 
 class Proceso:
     def __init__(self, ejecutable):
@@ -230,12 +359,6 @@ class Proceso:
     def getStack(self):
         return self.stack
 
-class Visualizador:
-
-    @staticmethod
-    def mostrar(ejecutable,procesador):
-        pass
-
 class Instruccion:
     def procesar(procesador):
         pass
@@ -246,7 +369,6 @@ class Instruccion:
     def __repr__(self):
         return self.__str__()
     
-
 class Mov(Instruccion):
     def __init__(self, param1, param2):
         self.param1 = param1
