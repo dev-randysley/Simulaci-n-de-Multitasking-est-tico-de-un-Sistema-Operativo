@@ -79,11 +79,10 @@ class Ensamblador:
         instrucciones_con_includes = Ensamblador.addInclude(file_name)
         lista_instrucciones,lookupTable = parsear_instrucciones(instrucciones_con_includes)
         entry_point = getEntryPoint(codigo_fuente,instrucciones_con_includes)
-        
         return Ejecutable(instrucciones=lista_instrucciones,
                           entryPoint=entry_point,
                           lookupTable=lookupTable,
-                          codigoFuente = codigo_fuente)
+                          codigoFuente = [instruccion[0] for instruccion in instrucciones_con_includes])
     @staticmethod
     def addInclude(file_name):
         codigo_fuente = parse_csv(file_name)
