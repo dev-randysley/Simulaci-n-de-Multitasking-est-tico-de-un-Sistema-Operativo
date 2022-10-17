@@ -79,11 +79,10 @@ class Ensamblador:
         instrucciones_con_includes = Ensamblador.addInclude(file_name)
         lista_instrucciones,lookupTable = parsear_instrucciones(instrucciones_con_includes)
         entry_point = getEntryPoint(codigo_fuente,instrucciones_con_includes)
-        
         return Ejecutable(instrucciones=lista_instrucciones,
                           entryPoint=entry_point,
                           lookupTable=lookupTable,
-                          codigoFuente = codigo_fuente)
+                          codigoFuente = [instruccion[0] for instruccion in instrucciones_con_includes])
     @staticmethod
     def addInclude(file_name):
         codigo_fuente = parse_csv(file_name)
@@ -128,11 +127,11 @@ class Visualizador:
 
     def mostrar(self,ejecutable, procesador):
         #try:
-            print("\n entra mostrar1")
+            
             #self.pantalla.clear()
 
             self.mostrarInstrucciones(ejecutable, procesador)
-            print("\n entra mostrar2")
+            
 
 
             self.mostrarRegistros(procesador)
@@ -148,8 +147,7 @@ class Visualizador:
         #    pass
 
     def mostrarInstrucciones(self, ejecutable, procesador):
-        print("\n entra mostrarInstrucciones")
-
+        
         totalMostrado = 0
 
         #Si "ip" vale 0 o 1
@@ -212,34 +210,19 @@ class Visualizador:
         self.pantalla.addstr(4, 25, "ip: " + str(procesador.ip))
         self.pantalla.addstr(5, 25, "flag: " + str(procesador.flag))
 
-#    def mostrarMemoriaVideo(self, procesador):
-        #self.pantalla.addstr(0, 40, "--Memoria de Video--")
-        #for fila in range(len(procesador.proceso.memoriaVideo)):
-       #     filaImprimir = fila + 1
-      #      for columna in range(len(procesador.proceso.memoriaVideo[fila])):
-     #           columnaImprimir = columna + 40
-    #            aImprimir = str(procesador.proceso.memoriaVideo[fila][columna])
-   #             yaImpreso = self.pantalla.inch(filaImprimir, columnaImprimir)
-  #              
- #               if(yaImpreso == 32 or aImprimir != "*"):
-#                    self.pantalla.addstr(filaImprimir, columnaImprimir, aImprimir)
 
-    def mostrarFin(listaProcesos):
+
+    def mostrarFin(self,procesador):
         print("\n\n", "¡Termino la ejecucion!")
-        print("Los procesos terminaron con los siguientes valores: ", end="\n\n")
+        print("Los registros terminaron con los siguientes valores: ", end="\n\n")
 
-        for proceso in listaProcesos:
-            if(proceso.error == ""):
-                print("AX:", proceso.contexto.ax)
-                print("BX:", proceso.contexto.bx)
-                print("CX:", proceso.contexto.cx)
-                print("DX:", proceso.contexto.dx)
-                print("IP:", proceso.contexto.ip)
-                print("FLAG:", proceso.contexto.flag)
+        print("AX:", procesador.getAx())
+        print("BX:", procesador.getBx())
+        print("CX:", procesador.getCx())
+        print("DX:", procesador.getDx())
+        print("IP:", procesador.getIP())
+        print("FLAG:", procesador.getFlag())
                 
-            else:
-                print("ERROR:", proceso.error)
-            print("----------------", end='\n\n')
 
 class Procesador:
     def __init__(self):
@@ -264,7 +247,7 @@ class Procesador:
             #print(proceso.getStack()) prueba para ver el stack
             visualizador.mostrar(ejecutable,self)
             #procesador.mostrar()
-        print("Valor de multiplicacion: ",self.cx)
+        visualizador.mostrarFin(self)
         
     def getProceso(self):
         return self.proceso
