@@ -126,34 +126,22 @@ class Visualizador:
         self.pantalla = curses.initscr()
 
     def mostrar(self,ejecutable, procesador):
-        #try:
-            
-            #self.pantalla.clear()
-
+        try:
+            self.pantalla.clear()
             self.mostrarInstrucciones(ejecutable, procesador)
-            
-
-
             self.mostrarRegistros(procesador)
-
-            #self.mostrarMemoriaVideo(procesador)
-
             self.pantalla.refresh()
 
             time.sleep(0.5)
-        #except:
-        #    print("\n entra EXCEPTION")
-
-        #    pass
+        except:
+            pass
 
     def mostrarInstrucciones(self, ejecutable, procesador):
         
         totalMostrado = 0
 
-        #Si "ip" vale 0 o 1
         if(procesador.ip <= 1):
             for indice in range(len(ejecutable.getCodigoFuente())):
-                #Si es la instruccion ejecutada, muestro con una flecha
                 if(indice == procesador.ip):
                     self.pantalla.addstr(indice, 0, "->")
                     self.pantalla.addstr(indice, 3, ejecutable.getCodigoFuente()[indice].strip())
@@ -166,7 +154,6 @@ class Visualizador:
                         self.pantalla.addstr(indice + 1, 3, "...")
                     break
         
-        #Si estoy en las ultimas 2 posiciones
         elif(procesador.ip + 1 >= (len(ejecutable.getCodigoFuente()) - 1)):
             rango = range(len(ejecutable.getCodigoFuente()))
             if(len(rango) > 5):
@@ -175,7 +162,6 @@ class Visualizador:
                 totalMostrado += 1
 
             for indice in rango:
-                #Si es la instruccion ejecutada, muestro con una flecha
                 if(indice == procesador.ip):
                     self.pantalla.addstr(totalMostrado, 0, "->")
                     self.pantalla.addstr(totalMostrado, 3, ejecutable.getCodigoFuente()[indice].strip())
@@ -184,7 +170,6 @@ class Visualizador:
                 
                 totalMostrado += 1
         
-        #Si esta en el medio de la lista
         else:
             indice = 0
             if(procesador.ip - 2 > 0):
@@ -213,7 +198,7 @@ class Visualizador:
 
 
     def mostrarFin(self,procesador):
-        print("\n\n", "¡Termino la ejecucion!")
+        print("\n Ejecución terminada")
         print("Los registros terminaron con los siguientes valores: ", end="\n\n")
 
         print("AX:", procesador.getAx())
@@ -244,9 +229,7 @@ class Procesador:
         while (punteroInstruccion < cantidadInstrucciones):
             ejecutable.getListaInstrucciones()[punteroInstruccion].procesar(self)
             punteroInstruccion = self.getIP()
-            #print(proceso.getStack()) prueba para ver el stack
             visualizador.mostrar(ejecutable,self)
-            #procesador.mostrar()
         visualizador.mostrarFin(self)
         
     def getProceso(self):
