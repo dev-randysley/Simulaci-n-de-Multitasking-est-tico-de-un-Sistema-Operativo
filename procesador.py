@@ -218,20 +218,24 @@ class Procesador:
         self.ip = 0
         self.flag = 0
         self.proceso = None
+        self.estado = ProcesadorEstado.ACTIVO
 
-    def procesar(self, proceso):
-        ejecutable = proceso.getEjecutable()
-        self.setProceso(proceso)
-        self.setIP(ejecutable.getEntryPoint())
+    def procesar(self):
+        self.setIP(self.proceso.ejecutable.getEntryPoint())
         punteroInstruccion = self.getIP()
-        cantidadInstrucciones = len(ejecutable.getListaInstrucciones())
+        cantidadInstrucciones = len(self.proceso.ejecutable.getListaInstrucciones())
         visualizador = Visualizador()
         while (punteroInstruccion < cantidadInstrucciones):
-            ejecutable.getListaInstrucciones()[punteroInstruccion].procesar(self)
+            self.proceso.ejecutable.getListaInstrucciones()[punteroInstruccion].procesar(self)
             punteroInstruccion = self.getIP()
-            visualizador.mostrar(ejecutable,self)
+            self.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
+            visualizador.mostrar(self.proceso.ejecutable,self)
         visualizador.mostrarFin(self)
-        
+    
+
+    def clockHandler(self):
+        self.sistema.clockHandler()
+
     def getProceso(self):
         return self.proceso
 
@@ -297,6 +301,11 @@ class Procesador:
         "ip" : getIP,
         "flag" : getFlag
     }
+
+
+class ProcesadorEstado(Enum):
+    ACTIVO = 0,
+    INACTIVO = 1
     
 class SistemaOperativo:
     def __init__(self,ejecutable, procesador):
@@ -314,12 +323,18 @@ class Proceso:
     def __init__(self, ejecutable):
         self.ejecutable = ejecutable
         self.stack = []
+        self.estado = ProcesoEstado.BLOQUEADO
     
     def getEjecutable(self):
         return self.ejecutable
     
     def getStack(self):
         return self.stack
+
+class ProcesoEstado(Enum):
+    BLOQUEADO = 0,
+    EJECUTANDO = 1,
+    FINALIZADO = 2
 
 class Instruccion:
     def procesar(procesador):
@@ -486,6 +501,7 @@ class Ret(Instruccion):
     def __str__(self):
         string = "ret "
         return string
+
 
 class Multi(Instruccion):
     
