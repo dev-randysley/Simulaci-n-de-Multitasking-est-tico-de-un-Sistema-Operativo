@@ -1,3 +1,4 @@
+from enum import Enum
 from multiprocessing import Value
 from util import parse_csv
 import re
@@ -221,20 +222,29 @@ class Procesador:
         self.estado = ProcesadorEstado.ACTIVO
 
     def procesar(self):
+        while (self.estado == ProcesadorEstado.ACTIVO):
+            procesadoCorrectamente = True
+
         self.setIP(self.proceso.ejecutable.getEntryPoint())
         punteroInstruccion = self.getIP()
         cantidadInstrucciones = len(self.proceso.ejecutable.getListaInstrucciones())
         visualizador = Visualizador()
-        while (punteroInstruccion < cantidadInstrucciones):
-            self.proceso.ejecutable.getListaInstrucciones()[punteroInstruccion].procesar(self)
+        while (punteroInstruccion < cantidadInstrucciones and procesadoCorrectamente):
+            procesadoCorrectamente = self.proceso.ejecutable.getListaInstrucciones()[punteroInstruccion].procesar(self)
             punteroInstruccion = self.getIP()
-            self.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
-            visualizador.mostrar(self.proceso.ejecutable,self)
+            if (not procesadoCorrectamente):
+                self.proceso.estado = ProcesoEstado.FINALIZADO
+                self.sistema.cambiarProceso()
+            else:
+                self.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
+                visualizador.mostrar(self.proceso.ejecutable,self)
+        
+        #Si termino el ejecutable
+            self.proceso.estado = ProcesoEstado.FINALIZADO
+            self.sistema.cambiarProceso()
+
         visualizador.mostrarFin(self)
     
-
-    def clockHandler(self):
-        self.sistema.clockHandler()
 
     def getProceso(self):
         return self.proceso
@@ -308,9 +318,21 @@ class ProcesadorEstado(Enum):
     INACTIVO = 1
     
 class SistemaOperativo:
-    def __init__(self,ejecutable, procesador):
-        self.ejecutable = ejecutable
+    def __init__(self,ejecutables, procesador):
+        self.ejecutables = ejecutables
         self.procesador = procesador
+        self.listaProcesos = list()
+        self.procesoActivo = 0
+        self.contadorInstrucciones = 0
+        self.INSTRUCCIONESMAXIMAS = 5
+
+        for ejecutable in ejecutables:
+            proceso = Proceso(ejecutable)
+            proceso.contexto.ip = proceso.ejecutable.entryPoint
+            self.listaProcesos.append(proceso)
+        
+        self.procesador.setearSistema(self)
+        self.procesador.setearProceso(self.listaProcesos[self.procesoActivo])
     
     def procesar(self):
         proceso = Proceso(self.ejecutable)
@@ -318,18 +340,81 @@ class SistemaOperativo:
     
     def getProcesador(self):
         return self.procesador
+    
+    def clockHandler(self):
+        self.contadorInstrucciones += 1
+        if(self.contadorInstrucciones >= self.INSTRUCCIONESMAXIMAS):
+            self.cambiarProceso()
+    
+    def cambiarProceso(self):
+        contexto = self.procesador.getContexto()
+        self.listaProcesos[self.procesoActivo].setContexto(contexto)
+        self.listaProcesos[self.procesoActivo].stack = self.procesador.proceso.getStack()
+        self.listaProcesos[self.procesoActivo].estado = self.procesador.proceso.getEstado()
+        if(self.listaProcesos[self.procesoActivo].estado == ProcesoEstado.EJECUTANDO):
+            self.listaProcesos[self.procesoActivo].estado = ProcesoEstado.BLOQUEADO
+
+        self.procesoActivo = self.obtenerProximoProceso()
+
+        if(self.procesoActivo != -1):
+            self.listaProcesos[self.procesoActivo].estado = ProcesoEstado.EJECUTANDO
+            self.procesador.setearProceso(self.listaProcesos[self.procesoActivo])
+            self.contadorInstrucciones = 0
+        else:
+            self.procesador.estado = ProcesadorEstado.INACTIVO
+
+    def obtenerProximoProceso(self):
+        procesoActivo = self.procesoActivo
+        #Si hay procesos que ejecutar
+        if(self.hayProcesosBloqueados()):
+            seguirBuscando = True
+            while(seguirBuscando):
+                if(len(self.listaProcesos) > (self.procesoActivo + 1)):
+                    procesoActivo += 1
+                    if(self.listaProcesos[procesoActivo].estado == ProcesoEstado.BLOQUEADO):
+                        seguirBuscando = False
+                else:
+                    procesoActivo = 0
+                    if(self.listaProcesos[procesoActivo].estado == ProcesoEstado.BLOQUEADO):
+                        seguirBuscando = False
+        else:
+            procesoActivo = -1
+        
+        return procesoActivo
+    
+    def hayProcesosBloqueados(self):
+        hayProcesosBloqueados = False
+        for proceso in self.listaProcesos:
+            if(proceso.estado == ProcesoEstado.BLOQUEADO):
+                hayProcesosBloqueados = True
+                break
+
+        return hayProcesosBloqueados
 
 class Proceso:
     def __init__(self, ejecutable):
         self.ejecutable = ejecutable
         self.stack = []
         self.estado = ProcesoEstado.BLOQUEADO
+        self.contexto = Contexto()
     
     def getEjecutable(self):
         return self.ejecutable
     
     def getStack(self):
         return self.stack
+    
+    def setStack(self, stack):
+        self.stack = stack
+    
+    def getContexto(self):
+        return self.contexto
+
+    def setContexto(self, contexto):
+        self.contexto = contexto
+
+    def getEstado(self):
+        return self.estado
 
 class ProcesoEstado(Enum):
     BLOQUEADO = 0,
