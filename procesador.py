@@ -1,5 +1,5 @@
 from enum import Enum
-from multiprocessing import Value
+from contexto import Contexto
 from util import parse_csv
 import re
 import curses
