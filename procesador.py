@@ -225,19 +225,19 @@ class Procesador:
         while (self.estado == ProcesadorEstado.ACTIVO):
             procesadoCorrectamente = True
 
-        self.setIP(self.proceso.ejecutable.getEntryPoint())
-        punteroInstruccion = self.getIP()
-        cantidadInstrucciones = len(self.proceso.ejecutable.getListaInstrucciones())
-        visualizador = Visualizador()
-        while (punteroInstruccion < cantidadInstrucciones and procesadoCorrectamente):
-            procesadoCorrectamente = self.proceso.ejecutable.getListaInstrucciones()[punteroInstruccion].procesar(self)
+            self.setIP(self.proceso.ejecutable.getEntryPoint())
             punteroInstruccion = self.getIP()
-            if (not procesadoCorrectamente):
-                self.proceso.estado = ProcesoEstado.FINALIZADO
-                self.sistema.cambiarProceso()
-            else:
-                self.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
-                visualizador.mostrar(self.proceso.ejecutable,self)
+            cantidadInstrucciones = len(self.proceso.ejecutable.getListaInstrucciones())
+            visualizador = Visualizador()
+            while (punteroInstruccion < cantidadInstrucciones and procesadoCorrectamente):
+                procesadoCorrectamente = self.proceso.ejecutable.getListaInstrucciones()[punteroInstruccion].procesar(self)
+                punteroInstruccion = self.getIP()
+                if (not procesadoCorrectamente):
+                    self.proceso.estado = ProcesoEstado.FINALIZADO
+                    self.sistema.cambiarProceso()
+                else:
+                    self.sistema.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
+                    visualizador.mostrar(self.proceso.ejecutable,self)
         
         #Si termino el ejecutable
             self.proceso.estado = ProcesoEstado.FINALIZADO
@@ -335,7 +335,7 @@ class SistemaOperativo:
         self.procesador.setearProceso(self.listaProcesos[self.procesoActivo])
     
     def procesar(self):
-        proceso = Proceso(self.ejecutable)
+        proceso = Proceso(self.ejecutable) #Modificar
         self.procesador.procesar(proceso)
     
     def getProcesador(self):
