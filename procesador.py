@@ -4,13 +4,14 @@ from util import parse_csv
 import re
 import curses
 import time
+import sys
 
 FILE_NAME = "prog.asm"
 FILE_NAME_TEST_FUNCIONES = "test_llamado_funciones.asm"
 
-def main():
-    ejecutable = Ensamblador.ensamblar(FILE_NAME_TEST_FUNCIONES)
-    sistemaOperativo = SistemaOperativo(ejecutable,Procesador())
+def main(archivos):
+    ejecutables = [Ensamblador.ensamblar(archivo) for archivo in archivos]
+    sistemaOperativo = SistemaOperativo(ejecutables,Procesador())
     sistemaOperativo.procesar()
 
 def is_label(instruction):
@@ -343,7 +344,7 @@ class SistemaOperativo:
         self.procesador.setProceso(self.listaProcesos[self.procesoActivo])
     
     def procesar(self):
-        self.procesador.procesar(self.listaProcesos[self.procesoActivo])
+        self.procesador.procesar()
     
     def getProcesador(self):
         return self.procesador
@@ -603,4 +604,4 @@ class Multi(Instruccion):
         return string
 
 if __name__ == '__main__':
-    main()
+    main([archivo for archivo in sys.argv if archivo != sys.argv[0]])
