@@ -132,6 +132,7 @@ class Visualizador:
             self.pantalla.clear()
             self.mostrarInstrucciones(ejecutable, procesador)
             self.mostrarRegistros(procesador)
+            self.mostrarMemoriaVideo(procesador)
             self.pantalla.refresh()
 
             time.sleep(0.5)
@@ -197,6 +198,17 @@ class Visualizador:
         self.pantalla.addstr(4, 25, "ip: " + str(procesador.ip))
         self.pantalla.addstr(5, 25, "flag: " + str(procesador.flag))
 
+    def mostrarMemoriaVideo(self, procesador):
+        self.pantalla.addstr(0, 40, "--Memoria de Video--")
+        for fila in range(len(procesador.proceso.memoriaVideo)):
+            filaImprimir = fila + 1
+            for columna in range(len(procesador.proceso.memoriaVideo[fila])):
+                columnaImprimir = columna + 40
+                aImprimir = str(procesador.proceso.memoriaVideo[fila][columna])
+                impreso = self.pantalla.inch(filaImprimir, columnaImprimir)
+                
+                if(impreso == 32 or aImprimir != "*"):
+                    self.pantalla.addstr(filaImprimir, columnaImprimir, aImprimir)
 
 
     def mostrarFin(self,procesador):
@@ -385,6 +397,14 @@ class Proceso:
         self.stack = []
         self.estado = ProcesoEstado.BLOQUEADO
         self.contexto = {}
+        self.memoriaVideo = []
+        self.inicializarMemoriaVideo()
+    
+    def inicializarMemoriaVideo(self):
+        for i in range(10):
+            self.memoriaVideo.append([])
+            for j in range(10):
+                self.memoriaVideo[i].append('*')
     
     def getEjecutable(self):
         return self.ejecutable
