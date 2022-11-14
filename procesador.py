@@ -18,7 +18,7 @@ def is_label(instruction):
     return re.search('^([\w_]+):', instruction)
 
 def parse_instruction(instruction):
-    match = re.search('(mov|add|jmp|jz|cmp|inc|dec|pop|push|ret|mult|call)(.*)', instruction)
+    match = re.search('(mov|add|jmp|jz|cmp|inc|dec|pop|push|ret|mult|call|int)(.*)', instruction)
     if match:
         params = re.search('\s*(\w*),\s*(\w*)', instruction)
         if (match.group(1) in ["cmp", "add", "mov", "mult"]):
@@ -34,7 +34,7 @@ def parse_instruction(instruction):
             elif (match.group(1) == "mult"):
                 return Multi(params.group(1).strip(),params.group(2).strip())
 
-        elif (match.group(1) in ["dec", "inc", "jz", "jmp", "pop", "push", "ret", "call"]):
+        elif (match.group(1) in ["dec", "inc", "jz", "jmp", "pop", "push", "ret", "call","int"]):
             if (match.group(1) == "dec"):
                 return Dec(match.group(2).strip())
 
@@ -58,6 +58,9 @@ def parse_instruction(instruction):
             
             elif (match.group(1) == "call"):
                 return Call(match.group(2).strip())
+            
+            elif (match.group(1) == "int"):
+                return Int(match.group(2).strip())
         else:
             raise Exception("El comando ingresado en el codigo es incorrecto")
 
@@ -102,7 +105,9 @@ def getEntryPoint(main_instructions, lista_instrucciones):
         if not "Include" in line:
             entryPoint = line
             break
-    return [index for index,line in enumerate(lista_instrucciones) if line[0] == entryPoint][0] - 1
+    valor = [index for index,line in enumerate(lista_instrucciones) if line[0] == entryPoint][0] - 1
+
+    return 0 if valor == -1 else valor
 
 class Ejecutable:
     def __init__(self, entryPoint, instrucciones : list, lookupTable : dict, codigoFuente: list):
@@ -135,7 +140,7 @@ class Visualizador:
             self.mostrarMemoriaVideo(procesador)
             self.pantalla.refresh()
 
-            time.sleep(0.5)
+            time.sleep(1)
         except:
             pass
 
@@ -244,7 +249,8 @@ class Procesador:
                     self.proceso.ejecutable.getListaInstrucciones()[self.getIP()].procesar(self)
                     self.sistema.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
                     visualizador.mostrar(self.proceso.ejecutable,self)
-                except Exception:
+                except Exception as e:
+                    print(e)
                     self.proceso.estado = ProcesoEstado.FINALIZADO
                     self.sistema.cambiarProceso()
 
@@ -256,6 +262,9 @@ class Procesador:
     
     def setSistema(self,sistemaOperativo):
         self.sistema = sistemaOperativo
+    
+    def getSistema(self):
+        return self.sistema 
 
     def getProceso(self):
         return self.proceso
@@ -389,6 +398,14 @@ class SistemaOperativo:
             if(proceso.estado == ProcesoEstado.BLOQUEADO):
                 return index
         return NOT_FOUND
+
+    def syscallHandler(self,servicio, parametros):
+        if (servicio == "1"): #imprimir por pantalla
+            valor = parametros[0]
+            fila = parametros[1]
+            columna = parametros[2]
+            self.listaProcesos[self.procesoActivo].memoriaVideo[fila][columna] = valor
+
 
 
 class Proceso:
@@ -622,6 +639,28 @@ class Multi(Instruccion):
     def __str__(self):
         string = "multi {}, {}".format(self.param1,self.param2)
         return string
+
+class Int(Instruccion):
+    def __init__(self,nro):
+        self.nro = nro
+    def procesar(self, procesador):
+        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
+        SistemaOperativo = procesador.getSistema()
+        parametros = []
+        if (self.nro == "1"): #imprimir por pantalla
+        # en ax vamos a tener el entero que queremos imprimir, en bx tendrá la fila y cx la columna de donde donde quiero que se imprima en la pantalla
+            parametros = [procesador.getAx(), procesador.getBx(), procesador.getCx()]
+        else: 
+            #Error
+            raise Exception("Numero para instruccion Int invalido")
+        
+        SistemaOperativo.syscallHandler(self.nro, parametros)
+        
+
+    def __str__(self):
+        string = "Int {}".format(self.nro)
+        return string
+
 
 if __name__ == '__main__':
     main([archivo for archivo in sys.argv if archivo != sys.argv[0]])
