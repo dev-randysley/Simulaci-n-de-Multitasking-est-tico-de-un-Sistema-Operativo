@@ -249,12 +249,13 @@ class Procesador:
                     self.proceso.ejecutable.getListaInstrucciones()[self.getIP()].procesar(self)
                     self.sistema.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
                     visualizador.mostrar(self.proceso.ejecutable,self)
+                    
                 except Exception as e:
                     print(e)
                     self.proceso.estado = ProcesoEstado.FINALIZADO
                     self.sistema.cambiarProceso()
 
-        #Si termino el ejecutable
+            #Si termino el ejecutable
             self.proceso.estado = ProcesoEstado.FINALIZADO
             self.sistema.cambiarProceso()
 
@@ -287,7 +288,15 @@ class Procesador:
     def getContexto(self):
         return {"ax":self.getAx(),"bx":self.getBx(), "cx":self.getCx(),
                 "dx":self.getDx(), "ip":self.getIP(), "flag":self.getFlag()}
-
+    
+    def setContexto(self, contexto):
+        self.setAx(contexto["ax"])
+        self.setBx(contexto["bx"])
+        self.setCx(contexto["cx"])
+        self.setDx(contexto["dx"])
+        self.setIP(contexto["ip"])
+        self.setFlag(contexto["flag"])
+       
     def setAx(self,valor):
         self.ax = valor
 
@@ -358,11 +367,18 @@ class SistemaOperativo:
 
         for ejecutable in ejecutables:
             proceso = Proceso(ejecutable)
-            proceso.getContexto()["ip"] = proceso.ejecutable.entryPoint
+            self.setContextoProceso(proceso)
             self.listaProcesos.append(proceso)
         
         self.procesador.setSistema(self)
         self.procesador.setProceso(self.listaProcesos[self.procesoActivo])
+
+    def setContextoProceso(self,proceso):
+        proceso.setContexto({
+            "ax":0,"bx":0, "cx":0,
+            "dx":0, "ip":proceso.ejecutable.entryPoint, "flag":0
+        })
+
     
     def procesar(self):
         self.procesador.procesar()
@@ -388,16 +404,43 @@ class SistemaOperativo:
         if(self.procesoActivo != -1):
             self.listaProcesos[self.procesoActivo].setEstado(ProcesoEstado.EJECUTANDO)
             self.procesador.setProceso(self.listaProcesos[self.procesoActivo])
+            self.procesador.setContexto(self.listaProcesos[self.procesoActivo].getContexto())
             self.contadorInstrucciones = 0
         else:
             self.procesador.setEstado(ProcesadorEstado.INACTIVO) 
 
     def obtenerProximoProceso(self):        
-        NOT_FOUND = -1
-        for index, proceso in enumerate(self.listaProcesos):
-            if(proceso.estado == ProcesoEstado.BLOQUEADO):
-                return index
-        return NOT_FOUND
+        procesoActivo = self.procesoActivo
+        #Si hay procesos que ejecutar
+        if(self.hayProcesosBloqueados()):
+            seguirBuscando = True
+            while(seguirBuscando):
+                if(len(self.listaProcesos) > (self.procesoActivo + 1)):
+                    procesoActivo += 1
+                    if(self.listaProcesos[procesoActivo].estado == ProcesoEstado.BLOQUEADO):
+                        seguirBuscando = False
+                elif self.listaProcesos[procesoActivo].estado == ProcesoEstado.BLOQUEADO:
+                     seguirBuscando = False
+                else:
+                    procesoActivo = 0
+                    if(self.listaProcesos[procesoActivo].estado == ProcesoEstado.BLOQUEADO):
+                        seguirBuscando = False
+                    
+        else:
+            if len(self.listaProcesos) == 1:
+                procesoActivo = self.procesoActivo
+            else:
+                procesoActivo = -1
+        return procesoActivo
+    
+    def hayProcesosBloqueados(self):
+        hayProcesosBloqueados = False
+        for proceso in self.listaProcesos:
+             if(proceso.estado == ProcesoEstado.BLOQUEADO):
+                hayProcesosBloqueados = True
+                break
+
+        return hayProcesosBloqueados
 
     def syscallHandler(self,servicio, parametros):
         if (servicio == "1"): #imprimir por pantalla
