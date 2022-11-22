@@ -18,7 +18,7 @@ def is_label(instruction):
     return re.search('^([\w_]+):', instruction)
 
 def parse_instruction(instruction):
-    match = re.search('(mov|add|jmp|jz|cmp|inc|dec|pop|push|ret|mult|call|int)(.*)', instruction)
+    match = re.search('(mov|add|jmp|jz|cmp|inc|dec|pop|push|ret|mult|call|int|subt|div|raizCuadrada)(.*)', instruction)
     if match:
         params = re.search('\s*(\w*),\s*(\w*)', instruction)
         if (match.group(1) in ["cmp", "add", "mov", "mult"]):
@@ -33,6 +33,12 @@ def parse_instruction(instruction):
 
             elif (match.group(1) == "mult"):
                 return Multi(params.group(1).strip(),params.group(2).strip())
+            
+            elif (match.group(1) == "subt"):
+                return Subt(params.group(1).strip(),params.group(2).strip())
+            
+            elif (match.group(1) == "div"):
+                return Div(params.group(1).strip(),params.group(2).strip())
 
         elif (match.group(1) in ["dec", "inc", "jz", "jmp", "pop", "push", "ret", "call","int"]):
             if (match.group(1) == "dec"):
@@ -61,6 +67,9 @@ def parse_instruction(instruction):
             
             elif (match.group(1) == "int"):
                 return Int(match.group(2).strip())
+            
+            elif (match.group(1) == "raizCuadrada"):
+                return RaizCuadrada(match.group(2).strip())
         else:
             raise Exception("El comando ingresado en el codigo es incorrecto")
 
@@ -539,6 +548,64 @@ class Add(Instruccion):
         string = "add {}, {}".format(self.param1,self.param2)
         return string
 
+class Subt(Instruccion):
+    def __init__(self, param1, param2):
+        self.param1 = param1
+        self.param2 = param2
+    def procesar(self, procesador):
+        if self.param2 in ["ax", "bx", "cx", "dx"]:
+            procesador.setRegistro(self.param1, 
+            procesador.getRegistro(self.param1) - procesador.getRegistro(self.param2))
+        else:
+            procesador.setRegistro(self.param1, 
+            procesador.getRegistro(self.param1) - self.param2)
+        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
+
+    def __str__(self):
+        string = "subt {}, {}".format(self.param1,self.param2)
+        return string
+    
+class Div(Instruccion):
+    def __init__(self, param1, param2):
+        self.param1 = param1
+        self.param2 = param2
+    def procesar(self, procesador):
+        if self.param2 in ["ax", "bx", "cx", "dx"]:
+            procesador.setRegistro(self.param1, 
+            procesador.getRegistro(self.param1) // procesador.getRegistro(self.param2))
+        else:
+            procesador.setRegistro(self.param1, 
+            procesador.getRegistro(self.param1) // self.param2)
+        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
+
+    def __str__(self):
+        string = "div {}, {}".format(self.param1,self.param2)
+        return string
+
+def calcularRaizCuadrada(num):
+    if num == 1:
+        return 1
+    raizEnteraAnterior = calcularRaizCuadrada(num  - 1)
+    for x in range(1,num + 1):
+        cuadrado = x ** 2
+        if cuadrado == num:
+            raizEnteraAnterior = x
+            break
+            
+    return raizEnteraAnterior
+
+class RaizCuadrada(Instruccion):
+    def __init__(self, param1):
+        self.param1 = param1
+    
+    def procesar(self, procesador):
+        procesador.setRegistro(self.param1,calcularRaizCuadrada(procesador.getRegistro(self.param1)))
+        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
+    
+    def __str__(self):
+        string = "raizCuadrada {}".format(self.param1)
+        return string
+    
 class Jmp(Instruccion):
     def __init__(self, label):
         self.param1 = label
