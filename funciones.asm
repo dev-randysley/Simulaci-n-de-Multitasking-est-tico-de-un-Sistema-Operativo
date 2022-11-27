@@ -1,22 +1,10 @@
-Multiplicar:
+Restar:
 pop ax
+pop bx
 pop cx
-pop dx
 push ax
-mult cx, dx
+neg cx
+pop cx
+add bx, cx
 ret
 
-Dividir:
-pop ax
-pop cx
-pop dx
-push ax
-div cx, dx
-ret
-
-RaizCuadrada:
-pop ax
-pop cx
-push ax
-raizCuadrada cx
-ret

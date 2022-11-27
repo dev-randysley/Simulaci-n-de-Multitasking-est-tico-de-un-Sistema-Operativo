@@ -18,7 +18,7 @@ def is_label(instruction):
     return re.search('^([\w_]+):', instruction)
 
 def parse_instruction(instruction):
-    match = re.search('(mov|add|jmp|jz|cmp|inc|dec|pop|push|ret|mult|call|int|subt|div|raizCuadrada)(.*)', instruction)
+    match = re.search('(mov|add|jmp|jz|cmp|inc|dec|pop|push|ret|mult|call|int|neg)(.*)', instruction)
     if match:
         params = re.search('\s*(\w*),\s*(\w*)', instruction)
         if (match.group(1) in ["cmp", "add", "mov", "mult"]):
@@ -40,7 +40,7 @@ def parse_instruction(instruction):
             elif (match.group(1) == "div"):
                 return Div(params.group(1).strip(),params.group(2).strip())
 
-        elif (match.group(1) in ["dec", "inc", "jz", "jmp", "pop", "push", "ret", "call","int"]):
+        elif (match.group(1) in ["dec", "inc", "jz", "jmp", "pop", "push", "ret", "call", "int", "neg"]):
             if (match.group(1) == "dec"):
                 return Dec(match.group(2).strip())
 
@@ -68,8 +68,8 @@ def parse_instruction(instruction):
             elif (match.group(1) == "int"):
                 return Int(match.group(2).strip())
             
-            elif (match.group(1) == "raizCuadrada"):
-                return RaizCuadrada(match.group(2).strip())
+            elif (match.group(1) == "neg"):
+                return Neg(match.group(2).strip())
         else:
             raise Exception("El comando ingresado en el codigo es incorrecto")
 
@@ -89,10 +89,9 @@ def parsear_instrucciones(instructions : list):
 class Ensamblador:
     @staticmethod
     def ensamblar(file_name):
-        codigo_fuente = parse_csv(file_name)
         instrucciones_con_includes = Ensamblador.addInclude(file_name)
         lista_instrucciones,lookupTable = parsear_instrucciones(instrucciones_con_includes)
-        entry_point = getEntryPoint(codigo_fuente,instrucciones_con_includes)
+        entry_point = lookupTable["Entry_point"] - 1
         return Ejecutable(instrucciones=lista_instrucciones,
                           entryPoint=entry_point,
                           lookupTable=lookupTable,
@@ -108,15 +107,6 @@ class Ensamblador:
                 lista_con_includes.append((line,file_name))
         return lista_con_includes
 
-def getEntryPoint(main_instructions, lista_instrucciones):
-    entryPoint = ""
-    for line in main_instructions:
-        if not "Include" in line:
-            entryPoint = line
-            break
-    valor = [index for index,line in enumerate(lista_instrucciones) if line[0] == entryPoint][0] - 1
-
-    return 0 if valor == -1 else valor
 
 class Ejecutable:
     def __init__(self, entryPoint, instrucciones : list, lookupTable : dict, codigoFuente: list):
@@ -256,14 +246,13 @@ class Procesador:
             while (self.getIP() < len(self.proceso.ejecutable.getListaInstrucciones())):
                 try:
                     self.proceso.ejecutable.getListaInstrucciones()[self.getIP()].procesar(self)
-                    self.sistema.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
+                    #self.sistema.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
                     visualizador.mostrar(self.proceso.ejecutable,self)
                     
                 except Exception as e:
                     print(e)
                     self.proceso.estado = ProcesoEstado.FINALIZADO
                     self.sistema.cambiarProceso()
-
             #Si termino el ejecutable
             self.proceso.estado = ProcesoEstado.FINALIZADO
             self.sistema.cambiarProceso()
@@ -397,7 +386,7 @@ class SistemaOperativo:
     
     def clockHandler(self):
         self.contadorInstrucciones += 1
-        if(self.contadorInstrucciones >= self.INSTRUCCIONES_MAXIMAS):
+        if(self.contadorInstrucciones >= self.INSTRUCCIONES_MAXIMAS and len(self.listaProcesos) > 1):
             self.cambiarProceso()
     
     def cambiarProceso(self):
@@ -437,7 +426,10 @@ class SistemaOperativo:
                     
         else:
             if len(self.listaProcesos) == 1:
-                procesoActivo = self.procesoActivo
+                if (self.listaProcesos[procesoActivo].estado == ProcesoEstado.FINALIZADO):
+                    procesoActivo = -1
+                else:
+                    procesoActivo = self.procesoActivo
             else:
                 procesoActivo = -1
         return procesoActivo
@@ -522,7 +514,7 @@ class Mov(Instruccion):
         self.param2 = param2
     def procesar(self, procesador):
         if self.param2 in ["ax", "bx", "cx", "dx"]:
-            procesador.setRegistro(self.param1,procesador.getRegistro(self.param2))
+            procesador.setRegistro(self.param1,int(procesador.getRegistro(self.param2)))
         else:
             procesador.setRegistro(self.param1, int(self.param2))
         procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
@@ -546,64 +538,6 @@ class Add(Instruccion):
 
     def __str__(self):
         string = "add {}, {}".format(self.param1,self.param2)
-        return string
-
-class Subt(Instruccion):
-    def __init__(self, param1, param2):
-        self.param1 = param1
-        self.param2 = param2
-    def procesar(self, procesador):
-        if self.param2 in ["ax", "bx", "cx", "dx"]:
-            procesador.setRegistro(self.param1, 
-            procesador.getRegistro(self.param1) - procesador.getRegistro(self.param2))
-        else:
-            procesador.setRegistro(self.param1, 
-            procesador.getRegistro(self.param1) - self.param2)
-        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
-
-    def __str__(self):
-        string = "subt {}, {}".format(self.param1,self.param2)
-        return string
-    
-class Div(Instruccion):
-    def __init__(self, param1, param2):
-        self.param1 = param1
-        self.param2 = param2
-    def procesar(self, procesador):
-        if self.param2 in ["ax", "bx", "cx", "dx"]:
-            procesador.setRegistro(self.param1, 
-            procesador.getRegistro(self.param1) // procesador.getRegistro(self.param2))
-        else:
-            procesador.setRegistro(self.param1, 
-            procesador.getRegistro(self.param1) // self.param2)
-        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
-
-    def __str__(self):
-        string = "div {}, {}".format(self.param1,self.param2)
-        return string
-
-def calcularRaizCuadrada(num):
-    if num == 1:
-        return 1
-    raizEnteraAnterior = calcularRaizCuadrada(num  - 1)
-    for x in range(1,num + 1):
-        cuadrado = x ** 2
-        if cuadrado == num:
-            raizEnteraAnterior = x
-            break
-            
-    return raizEnteraAnterior
-
-class RaizCuadrada(Instruccion):
-    def __init__(self, param1):
-        self.param1 = param1
-    
-    def procesar(self, procesador):
-        procesador.setRegistro(self.param1,calcularRaizCuadrada(procesador.getRegistro(self.param1)))
-        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
-    
-    def __str__(self):
-        string = "raizCuadrada {}".format(self.param1)
         return string
     
 class Jmp(Instruccion):
@@ -639,13 +573,15 @@ class Cmp(Instruccion):
         self.param2 = param2
     def procesar(self, procesador):
         if self.param2 in ["ax", "bx", "cx", "dx"]:
-            if int(procesador.getRegistro(self.param1)) == int(procesador.getRegistro(self.param2)):
+            if int(procesador.getRegistro(self.param1)) >= int(procesador.getRegistro(self.param2)):
+                procesador.setRegistro("flag",0)
+            else:
                 procesador.setRegistro("flag",1)
         else:
-            if int(procesador.getRegistro(self.param1)) == int(self.param2):
-                procesador.setRegistro("flag",1)
-            else:
+            if int(procesador.getRegistro(self.param1)) >= int(self.param2):
                 procesador.setRegistro("flag",0)
+            else:
+                procesador.setRegistro("flag",1)
 
         procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
     
@@ -731,25 +667,6 @@ class Ret(Instruccion):
         return string
 
 
-class Multi(Instruccion):
-    
-    def __init__(self, param1, param2):
-        self.param1 = param1
-        self.param2 = param2
-
-    def procesar(self, procesador):
-        if self.param2 in ["ax", "bx", "cx", "dx"]:
-            procesador.setRegistro(self.param1, 
-            int(procesador.getRegistro(self.param1)) * int(procesador.getRegistro(self.param2)))
-        else:
-            procesador.setRegistro(self.param1, 
-            procesador.getRegistro(self.param1) * self.param2)
-        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
-
-    def __str__(self):
-        string = "multi {}, {}".format(self.param1,self.param2)
-        return string
-
 class Int(Instruccion):
     def __init__(self,nro):
         self.nro = nro
@@ -771,6 +688,23 @@ class Int(Instruccion):
         string = "Int {}".format(self.nro)
         return string
 
+class Neg(Instruccion):
+    def __init__(self, param1):
+        self.param1 = param1
+
+    def procesar(self, procesador):
+        numero = self.param1
+
+        if self.param1 in ["ax", "bx", "cx", "dx"]:
+            numero = procesador.getRegistro(self.param1)
+        
+        numeroNegativo = int(numero) * -1
+        procesador.getProceso().getStack().append(numeroNegativo) 
+        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
+    
+    def __str__(self):
+        string = "neg {}".format(self.param1)
+        return string
 
 if __name__ == '__main__':
     main([archivo for archivo in sys.argv if archivo != sys.argv[0]])

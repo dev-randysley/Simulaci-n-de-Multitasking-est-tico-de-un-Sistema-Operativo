@@ -1,6 +1,10 @@
 Include funciones.asm
 
-push 5
-push 4
-call Multiplicar
-mov dx, ax
+Entry_point:
+mov ax, 10
+mov bx, 5
+
+push ax
+push bx
+call Restar
+mov dx, bx
