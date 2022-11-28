@@ -1,5 +1,16 @@
 Include funciones.asm
 
+Entry_point:
+mov ax, 5
+mov bx, 2
+mov cx, 0
+call CalcularRaices
+push bx
+mov bx, 0
+mov cx, 0
+pop ax
+mov bx, 1
+mov cx, 0
 
 CalcularRaices:
 push ax
@@ -28,53 +39,48 @@ call Restar
 mov dx, ax
 push dx
 call RaizCuadrada
-mov dx, ax - hasta aca anda bien
+mov dx, ax
 pop cx
 pop bx
-pop ax
+push dx
 neg bx
+pop bx
 push bx
 add bx, dx
-add ax, ax
-push ax
-push dx
-push ax
-push bx
-call Dividir
-mov cx, ax
-pop dx
-pop ax
-pop bx
+pop cx
 neg dx
 pop dx
-add bx, dx
+add dx, cx
+pop ax
+pop cx
+push bx
+push dx
+push ax
 push cx
-cmp bx, 0
-jz UltimaDivisionNegativa
+call Multiplicar
+push ax
+pop ax
+pop bx
+pop cx
 push ax
 push bx
+push ax
+push cx
 call Dividir
 pop bx
-ret
-UltimaDivisionNegativa:
-neg bx
-pop bx
+pop cx
 push ax
-push bx
+push cx
+neg bx
 call Dividir
 neg ax
 pop ax
 pop bx
-ret
+mov cx, 0
+mov dx, 0
 
-Entry_point:
-mov ax, 5
-mov bx, 10
-mov cx, 0
-call CalcularRaices
-push bx
-mov bx, 0
-mov cx, 0
-pop ax
-mov bx, 1
-mov cx, 0
+
+
+
+
+

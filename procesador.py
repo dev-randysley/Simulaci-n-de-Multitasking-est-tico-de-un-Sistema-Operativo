@@ -237,6 +237,7 @@ class Procesador:
             #visualizador = Visualizador()
             while (self.getIP() < len(self.proceso.ejecutable.getListaInstrucciones())):
                 try:
+                    #print(self.proceso.ejecutable.getListaInstrucciones()[self.getIP()])
                     self.proceso.ejecutable.getListaInstrucciones()[self.getIP()].procesar(self)
                     self.sistema.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
                     #visualizador.mostrar(self.proceso.ejecutable,self)
@@ -248,11 +249,12 @@ class Procesador:
             #Si termino el ejecutable
             self.proceso.estado = ProcesoEstado.FINALIZADO
             self.sistema.cambiarProceso()
-        print("ax: ",self.ax)
-        print("bx: ",self.bx)
-        print("cx: ",self.cx)
-        print("dx: ",self.dx)
         #visualizador.mostrarFin(self)
+        print("AX: ",self.ax)
+        print("BX: ",self.bx)
+        print("CX: ",self.cx)
+        print("DX: ",self.dx)
+        print(self.proceso.getStack())
     
     def setSistema(self,sistemaOperativo):
         self.sistema = sistemaOperativo
@@ -568,12 +570,12 @@ class Cmp(Instruccion):
         self.param2 = param2
     def procesar(self, procesador):
         if self.param2 in ["ax", "bx", "cx", "dx"]:
-            if int(procesador.getRegistro(self.param1)) == int(procesador.getRegistro(self.param2)):
+            if int(procesador.getRegistro(self.param1)) >= int(procesador.getRegistro(self.param2)):
                 procesador.setRegistro("flag",0)
             else:
                 procesador.setRegistro("flag",1)
         else:
-            if int(procesador.getRegistro(self.param1)) == int(self.param2):
+            if int(procesador.getRegistro(self.param1)) >= int(self.param2):
                 procesador.setRegistro("flag",0)
             else:
                 procesador.setRegistro("flag",1)
@@ -616,7 +618,7 @@ class Push(Instruccion):
         if self.param1 in ["ax", "bx", "cx", "dx"]:
            procesador.getProceso().getStack().append(procesador.getRegistro(self.param1))
         else:
-            procesador.getProceso().getStack().append(self.param1)
+            procesador.getProceso().getStack().append(int(self.param1))
         procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
         
     def __str__(self):

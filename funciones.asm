@@ -33,6 +33,8 @@ pop cx
 pop ax
 pop bx
 push cx
+cmp ax, 1
+jz Fin
 mov cx, 0
 mov dx, 0
 CicloDividir:
@@ -40,30 +42,10 @@ inc cx
 add dx, bx
 cmp dx, ax
 jz CicloDividir
-cmp ax, dx
-jz CalcularResultados
 mov ax, cx
-mov bx, 0
+Fin:
 ret
-CalcularResultados:
-dec cx
-push ax
-push bx
-push cx
-push bx
-push cx
-call Multiplicar
-mov dx, ax
-pop cx
-pop bx
-pop ax
-push cx
-push dx
-push ax
-call Restar
-mov bx, ax
-pop ax
-ret
+
 
 RaizCuadrada:
 pop cx
