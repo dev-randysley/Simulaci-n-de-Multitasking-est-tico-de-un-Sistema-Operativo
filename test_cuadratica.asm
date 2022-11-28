@@ -1,8 +1,8 @@
 Include funciones.asm
 
 Entry_point:
-mov ax, 5
-mov bx, 2
+mov ax, 2
+mov bx, 4
 mov cx, 0
 call CalcularRaices
 push bx
@@ -42,6 +42,7 @@ call RaizCuadrada
 mov dx, ax
 pop cx
 pop bx
+pop ax
 push dx
 neg bx
 pop bx
@@ -51,12 +52,11 @@ pop cx
 neg dx
 pop dx
 add dx, cx
-pop ax
 pop cx
 push bx
 push dx
 push ax
-push cx
+push 2
 call Multiplicar
 push ax
 pop ax
