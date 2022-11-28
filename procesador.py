@@ -31,15 +31,6 @@ def parse_instruction(instruction):
             elif (match.group(1) == "cmp"):
                 return Cmp(params.group(1).strip(),params.group(2).strip())
 
-            elif (match.group(1) == "mult"):
-                return Multi(params.group(1).strip(),params.group(2).strip())
-            
-            elif (match.group(1) == "subt"):
-                return Subt(params.group(1).strip(),params.group(2).strip())
-            
-            elif (match.group(1) == "div"):
-                return Div(params.group(1).strip(),params.group(2).strip())
-
         elif (match.group(1) in ["dec", "inc", "jz", "jmp", "pop", "push", "ret", "call", "int", "neg"]):
             if (match.group(1) == "dec"):
                 return Dec(match.group(2).strip())
@@ -80,7 +71,8 @@ def parsear_instrucciones(instructions : list):
     for index, instruction in enumerate(instructions):
         match = is_label(instruction[0])
         if match:
-            lookupTable[match.group(1)] = index    
+            list_instrucciones.append(Etiqueta(match.group(1)))
+            lookupTable[match.group(1)] = index
         else:
             list_instrucciones.append(parse_instruction(instruction[0]))
 
@@ -91,7 +83,7 @@ class Ensamblador:
     def ensamblar(file_name):
         instrucciones_con_includes = Ensamblador.addInclude(file_name)
         lista_instrucciones,lookupTable = parsear_instrucciones(instrucciones_con_includes)
-        entry_point = lookupTable["Entry_point"] - 1
+        entry_point = lookupTable["Entry_point"] + 1
         return Ejecutable(instrucciones=lista_instrucciones,
                           entryPoint=entry_point,
                           lookupTable=lookupTable,
@@ -242,12 +234,12 @@ class Procesador:
     def procesar(self):
         while (self.estado == ProcesadorEstado.ACTIVO):
             self.setIP(self.proceso.getContexto()["ip"])
-            visualizador = Visualizador()
+            #visualizador = Visualizador()
             while (self.getIP() < len(self.proceso.ejecutable.getListaInstrucciones())):
                 try:
                     self.proceso.ejecutable.getListaInstrucciones()[self.getIP()].procesar(self)
-                    #self.sistema.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
-                    visualizador.mostrar(self.proceso.ejecutable,self)
+                    self.sistema.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
+                    #visualizador.mostrar(self.proceso.ejecutable,self)
                     
                 except Exception as e:
                     print(e)
@@ -256,8 +248,11 @@ class Procesador:
             #Si termino el ejecutable
             self.proceso.estado = ProcesoEstado.FINALIZADO
             self.sistema.cambiarProceso()
-
-        visualizador.mostrarFin(self)
+        print("ax: ",self.ax)
+        print("bx: ",self.bx)
+        print("cx: ",self.cx)
+        print("dx: ",self.dx)
+        #visualizador.mostrarFin(self)
     
     def setSistema(self,sistemaOperativo):
         self.sistema = sistemaOperativo
@@ -559,7 +554,7 @@ class Jz(Instruccion):
     def procesar(self, procesador):
         lookupTable = procesador.getProceso().getEjecutable().getLookupTable()
         indiceProximaInstruccion = lookupTable[self.param1]
-        if procesador.getFlag() == 0:
+        if procesador.getFlag() == 1:
             procesador.setIP(indiceProximaInstruccion) # seteamos directamente el indice segun la etiqueta
         else:
              procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
@@ -573,12 +568,12 @@ class Cmp(Instruccion):
         self.param2 = param2
     def procesar(self, procesador):
         if self.param2 in ["ax", "bx", "cx", "dx"]:
-            if int(procesador.getRegistro(self.param1)) >= int(procesador.getRegistro(self.param2)):
+            if int(procesador.getRegistro(self.param1)) == int(procesador.getRegistro(self.param2)):
                 procesador.setRegistro("flag",0)
             else:
                 procesador.setRegistro("flag",1)
         else:
-            if int(procesador.getRegistro(self.param1)) >= int(self.param2):
+            if int(procesador.getRegistro(self.param1)) == int(self.param2):
                 procesador.setRegistro("flag",0)
             else:
                 procesador.setRegistro("flag",1)
@@ -705,6 +700,17 @@ class Neg(Instruccion):
     def __str__(self):
         string = "neg {}".format(self.param1)
         return string
+
+# solo para representar las etiquetas, no hace nada
+class Etiqueta(Instruccion):
+    def __init__(self, name):
+        self.nombre = name
+
+    def procesar(self, procesador):
+        procesador.setIP(procesador.getIP() + 1) # pasamos a la siguiente instruccion despues de ejecutar
+    
+    def __str__(self):
+        return self.nombre
 
 if __name__ == '__main__':
     main([archivo for archivo in sys.argv if archivo != sys.argv[0]])
