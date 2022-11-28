@@ -358,6 +358,8 @@ class SistemaOperativo:
             proceso = Proceso(ejecutable)
             self.setContextoProceso(proceso)
             self.listaProcesos.append(proceso)
+        # pedir ingreso por teclado los valores almacenar en el buffer de teclado
+        
         
         self.procesador.setSistema(self)
         self.procesador.setProceso(self.listaProcesos[self.procesoActivo])
@@ -451,6 +453,7 @@ class Proceso:
         self.contexto = {}
         self.memoriaVideo = []
         self.inicializarMemoriaVideo()
+        # debe tener una lista(buffer de teclado) de enteros correspondientes a los registros ax, bx, cx
     
     def inicializarMemoriaVideo(self):
         for i in range(10):

@@ -1,9 +1,9 @@
 Include funciones.asm
 
 Entry_point:
-mov ax, 2
-mov bx, 4
-mov cx, 0
+mov ax, 1 -> Int 2
+mov bx, 3 -> Int 2
+mov cx, 0 -> Int 2
 call CalcularRaices
 push bx
 mov bx, 0
@@ -78,6 +78,8 @@ pop ax
 pop bx
 mov cx, 0
 mov dx, 0
+Int1 -> para escribir en la memoria de video las raices
+Int1
 
 
 
