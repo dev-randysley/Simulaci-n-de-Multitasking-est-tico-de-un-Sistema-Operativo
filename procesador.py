@@ -234,12 +234,12 @@ class Procesador:
     def procesar(self):
         while (self.estado == ProcesadorEstado.ACTIVO):
             self.setIP(self.proceso.getContexto()["ip"])
-            visualizador = Visualizador()
+            #visualizador = Visualizador()
             while (self.getIP() < len(self.proceso.ejecutable.getListaInstrucciones())):
                 try:
                     self.proceso.ejecutable.getListaInstrucciones()[self.getIP()].procesar(self)
                     self.sistema.clockHandler()      #Llamamos al sistema operativo para evaluar si hay que pasar a otro proceso
-                    visualizador.mostrar(self.proceso.ejecutable,self)
+                    #visualizador.mostrar(self.proceso.ejecutable,self)
                     
                 except Exception as e:
                     print(e)
@@ -248,7 +248,12 @@ class Procesador:
             #Si termino el ejecutable
             self.proceso.estado = ProcesoEstado.FINALIZADO
             self.sistema.cambiarProceso()
-        visualizador.mostrarFin(self)
+        #visualizador.mostrarFin(self)
+        print("Ax: ",self.ax)
+        print("Bx: ",self.bx)
+        print("Cx: ",self.cx)
+        print("Dx: ",self.dx)
+        print(self.proceso.getStack())
     
     def setSistema(self,sistemaOperativo):
         self.sistema = sistemaOperativo

@@ -1,7 +1,7 @@
 Include funciones.asm
 
 Entry_point:
-mov ax, 25
+mov ax, 26
 mov bx, 5
 
 push bx

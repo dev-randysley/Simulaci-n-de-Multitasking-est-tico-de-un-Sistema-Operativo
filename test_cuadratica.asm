@@ -1,9 +1,9 @@
 Include funciones.asm
 
 Entry_point:
-mov ax, 1 -> Int 2
-mov bx, 3 -> Int 2
-mov cx, 0 -> Int 2
+mov ax, 1
+mov bx, 6
+mov cx, 8
 call CalcularRaices
 push bx
 mov bx, 0
