@@ -1,9 +1,9 @@
 Include funciones.asm
 
 Entry_point:
-mov ax, 1
-mov bx, 6
-mov cx, 8
+mov ax, 1 -> Int 2 se debe usar para tomar los valores del buffer de teclado
+mov bx, 6 -> Int 2
+mov cx, 8 -> Int 2
 call CalcularRaices
 push bx
 mov bx, 0
@@ -63,18 +63,20 @@ pop ax
 pop bx
 pop cx
 push ax
-push bx
+neg bx
 push ax
-push cx
+neg cx
 call Dividir
 pop bx
 pop cx
 push ax
 push cx
-neg bx
+push bx
 call Dividir
 neg ax
 pop ax
+pop bx
+neg bx
 pop bx
 mov cx, 0
 mov dx, 0

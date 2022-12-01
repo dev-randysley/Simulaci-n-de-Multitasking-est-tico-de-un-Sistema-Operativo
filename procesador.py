@@ -20,7 +20,7 @@ def is_label(instruction):
 def parse_instruction(instruction):
     match = re.search('(mov|add|jmp|jz|cmp|inc|dec|pop|push|ret|mult|call|int|neg)(.*)', instruction)
     if match:
-        params = re.search('\s*(\w*),\s*(\w*)', instruction)
+        params = re.search('\s*(\w*),\s*([-]*\w*)', instruction)
         if (match.group(1) in ["cmp", "add", "mov", "mult"]):
             if (match.group(1) == "mov"):
                 return Mov(params.group(1).strip(),params.group(2).strip())
