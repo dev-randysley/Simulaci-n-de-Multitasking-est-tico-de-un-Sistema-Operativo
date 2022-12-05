@@ -361,6 +361,10 @@ class SistemaOperativo:
 
         for ejecutable in ejecutables:
             proceso = Proceso(ejecutable)
+            coeficiente1 = int(input("Ingrese el valor del primer coeficiente: "))
+            coeficiente2 = int(input("Ingrese el valor del primer coeficiente: "))
+            coeficiente3 = int(input("Ingrese el valor del primer coeficiente: "))
+            proceso.bufferTeclado = [coeficiente1,coeficiente2,coeficiente3]
             self.setContextoProceso(proceso)
             self.listaProcesos.append(proceso)
         # pedir ingreso por teclado los valores almacenar en el buffer de teclado
@@ -458,6 +462,7 @@ class Proceso:
         self.contexto = {}
         self.memoriaVideo = []
         self.inicializarMemoriaVideo()
+        self.bufferTeclado = []
         # debe tener una lista(buffer de teclado) de enteros correspondientes a los registros ax, bx, cx
     
     def inicializarMemoriaVideo(self):
@@ -488,6 +493,9 @@ class Proceso:
 
     def getEstado(self):
         return self.estado
+
+    def getBufferTeclado(self):
+        return self.bufferTeclado
 
     def setEstado(self, estado):
         self.estado = estado
@@ -676,6 +684,14 @@ class Int(Instruccion):
         if (self.nro == "1"): #imprimir por pantalla
         # en ax vamos a tener el entero que queremos imprimir, en bx tendrá la fila y cx la columna de donde donde quiero que se imprima en la pantalla
             parametros = [procesador.getAx(), procesador.getBx(), procesador.getCx()]
+        elif self.nro == "2":
+            bufferTeclado = procesador.getProceso().getBufferTeclado()
+            if len(bufferTeclado) == 3:
+                procesador.setRegistro("ax",bufferTeclado.pop(0))
+            elif len(bufferTeclado) == 2:
+                procesador.setRegistro("bx",bufferTeclado.pop(0))
+            elif len(bufferTeclado) == 1:
+                procesador.setRegistro("cx",bufferTeclado.pop(0))
         else: 
             #Error
             raise Exception("Numero para instruccion Int invalido")
