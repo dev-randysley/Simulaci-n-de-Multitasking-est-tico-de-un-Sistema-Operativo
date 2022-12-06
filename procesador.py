@@ -245,14 +245,14 @@ class Procesador:
                     self.proceso.estado = ProcesoEstado.FINALIZADO
                     self.sistema.cambiarProceso()
             #Si termino el ejecutable
-                print("Ax: ",self.ax)
-                print("Bx: ",self.bx)
-                print("Cx: ",self.cx)
-                print("Dx: ",self.dx)
-                print(self.proceso.getStack())
+            print("Ax: ",self.ax)
+            print("Bx: ",self.bx)
+            print("Cx: ",self.cx)
+            print("Dx: ",self.dx)
+            print("Stack: ", self.proceso.getStack())
             self.proceso.estado = ProcesoEstado.FINALIZADO
             self.sistema.cambiarProceso()
-        #visualizador.mostrarFin(self)
+            #visualizador.mostrarFin(self)
     
     def setSistema(self,sistemaOperativo):
         self.sistema = sistemaOperativo
@@ -362,8 +362,9 @@ class SistemaOperativo:
         for ejecutable in ejecutables:
             proceso = Proceso(ejecutable)
             coeficiente1 = int(input("Ingrese el valor del primer coeficiente: "))
-            coeficiente2 = int(input("Ingrese el valor del primer coeficiente: "))
-            coeficiente3 = int(input("Ingrese el valor del primer coeficiente: "))
+            coeficiente2 = int(input("Ingrese el valor del segundo coeficiente: "))
+            coeficiente3 = int(input("Ingrese el valor del tercer coeficiente: "))
+            print("\n")
             proceso.bufferTeclado = [coeficiente1,coeficiente2,coeficiente3]
             self.setContextoProceso(proceso)
             self.listaProcesos.append(proceso)

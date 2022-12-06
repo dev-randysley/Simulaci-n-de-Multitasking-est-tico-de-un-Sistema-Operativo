@@ -91,3 +91,56 @@ CalcularResultadosRaizCuadrada:
 dec bx
 mov ax, bx
 ret
+
+VerificarNegativoCuadrado:
+pop cx
+pop bx
+cmp bx, 0 
+jz EsNegativo
+push bx
+push bx
+push cx
+ret
+EsNegativo:
+neg bx
+neg bx
+push cx
+ret
+
+DividirNegativos:
+pop cx
+pop ax
+pop bx
+push cx
+push bx
+push ax
+cmp ax, 0
+jz dividirNegativo
+call Dividir
+ret
+dividirNegativo:
+pop ax
+neg ax
+call Dividir
+neg ax
+pop ax
+ret
+
+MultiplicarNegativos:
+pop cx
+pop ax
+pop bx
+push cx
+push bx
+push ax
+cmp ax, 0
+jz multiplicarNegativo
+call Multiplicar
+ret
+multiplicarNegativo:
+pop ax
+neg ax
+call Multiplicar
+neg ax
+pop ax
+ret

@@ -16,46 +16,43 @@ CalcularRaices:
 push ax
 push bx
 push cx
-push 4
 push ax
-call Multiplicar
+push -4
+call MultiplicarNegativos
 mov dx, ax
-pop cx
-push cx
-push cx
 push dx
-call Multiplicar
+call MultiplicarNegativos
 mov dx, ax
-pop cx
 pop bx
-push bx
-push cx
 push dx
 push bx
 push bx
+call VerificarNegativoCuadrado
 call Multiplicar
+pop bx
+pop dx
+add ax, dx
+push bx
 push ax
-call Restar
-mov dx, ax
-push dx
 call RaizCuadrada
 mov dx, ax
-pop cx
 pop bx
-pop ax
 push dx
 neg bx
-pop bx
-push bx
-add bx, dx
-pop cx
-neg dx
-pop dx
-add dx, cx
-pop cx
-push bx
 push dx
+neg bx
+call Restar
+pop cx
+pop dx
+add cx, dx
 push ax
+push cx 
+pop ax
+pop bx
+pop cx
+push ax
+push bx
+push cx
 push 2
 call Multiplicar
 push ax
@@ -63,20 +60,18 @@ pop ax
 pop bx
 pop cx
 push ax
-neg bx
+push bx
 push ax
-neg cx
-call Dividir
+push cx
+call DividirNegativos
 pop bx
 pop cx
 push ax
 push cx
 push bx
-call Dividir
-neg ax
+call DividirNegativos
+push ax
 pop ax
-pop bx
-neg bx
 pop bx
 mov cx, 0
 mov dx, 0
